@@ -1,6 +1,6 @@
 export class Tile {
  
-        constructor(image, x, y, tileX, tileY, width, height) {
+        constructor(image, x, y, tileX, tileY, width, height,collider) {
             this.image = image; // Imagen del tile
             this.x = x; // Posición x del azulejo en el lienzo
             this.y = y; // Posición y del azulejo en el lienzo
@@ -8,6 +8,7 @@ export class Tile {
             this.tileY = tileY; // Coordenada y de recorte en la hoja de azulejos
             this.width = width; // Ancho del azulejo
             this.height = height; // Alto del azulejo
+            this.collider=collider;
         }
     
         draw(ctx) {
@@ -23,7 +24,17 @@ export class Tile {
                 this.width,
                 this.height
             );
+            if(this.collider==true){
+
+            
+            ctx.beginPath();
+            ctx.strokeRect(this.x,
+                this.y,
+                this.width,
+                this.height);
+                ctx.fill();
         }
+    }
     
         // Agrega más métodos según sea necesario
     }

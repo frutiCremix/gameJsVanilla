@@ -20,9 +20,9 @@ export class Map {
         [-1,-1,-1,-1,-1,-1,11,12,13],
         [-1,-1,-1,-1,-1,-1,31,32,33],
         [-1,-1,-1,-1,-1,-1,51,52,53],
-        [],
-        [],
-        [-1, -1, -1, 0, 1, 2, 3],
+        [-1,121,122,-1],
+        [140,141,142,143],
+        [160, 161, 162, 163, 1, 2, 3],
         [-1, -1, -1,20,21,22,23],
         [-1, -1, -1,40,41,42,43],
         [],
@@ -34,12 +34,12 @@ export class Map {
     tileSheetBuilding;
     tileMapFloor = {}; // Objeto para mapear los azulejos en la hoja de azulejos
     tileMapBuilding={};
+    mapTilesCollider=[];
     constructor(ctx) {
         this.ctx = ctx;
-        this.load();
     }
 
-    load() {//tile sheet floor
+    load(callback) {//tile sheet floor
         this.tileSheet = new Image();
         this.tileSheetBuilding=new Image();
         this.tileSheet.onload = () => {
@@ -51,9 +51,13 @@ export class Map {
         this.tileSheetBuilding.onload = () => {
             this.createTileMap(this.tileMapBuilding,this.tileW, this.tileH, Math.floor(this.tileSheetBuilding.width/this.tileW), Math.floor(this.tileSheetBuilding.height/this.tileH));
             this.createTiles(this.tileSheetBuilding,this.building,this.tileMapBuilding);//tilesheet,matriz,tilemap
+            //cuando cargue todo le pasamos el mapa de collider
+            
+            callback(this.mapTilesCollider);
         }
         this.tileSheet.src = "../public/TilesetFloor.png";
         this.tileSheetBuilding.src = "../public/TilesetBuilding.png";
+       
     }
 //creamos los recortes de cada azulejo en el mapa de suelo y lo guardamos en el array tileMap
     createTileMap(tileMap,tileWidth, tileHeight, tilesPerRow, totalRows) {
@@ -82,6 +86,11 @@ export class Map {
                 const tileInfo = tileMap[tileValue];
                 if (tileValue !== -1) {
                     const tileInfo = tileMap[tileValue];
+                    let collider=false;
+
+                    if(tileSheet.src.split('/').slice(-1).join("") !== "TilesetFloor.png"){
+                        collider=true;
+                    }
                     const tile = new Tile(
                         tileSheet,
                         tileX,
@@ -89,22 +98,37 @@ export class Map {
                         tileInfo.x,
                         tileInfo.y,
                         this.tileW,
-                        this.tileH
+                        this.tileH,
+                        collider
                     );
-                    this.tiles.push(tile);
+                    if(tile.collider==true){
+                        this.mapTilesCollider.push(tile);
+                    }else{
+                        this.tiles.push(tile);
+                    }
+                    
                 }
             }
         }
     }
+    //calcula el movimiento por separado en funcion de si es colisionable o no
+    //ojo puede crear desfasajes a futuro
     update(direccion,speed) {
         if(direccion ==0){
             this.tiles.forEach(tile => {
                 tile.x+=0
                 tile.x+=0
             });
+            this.mapTilesCollider.forEach(tile => {
+                tile.x+=0
+                tile.x+=0
+            })
         }
         else if(direccion == 1){
             this.tiles.forEach(tile => {
+                tile.x-=speed
+            });
+            this.mapTilesCollider.forEach(tile => {
                 tile.x-=speed
             });
         }
@@ -112,14 +136,23 @@ export class Map {
             this.tiles.forEach(tile => {
                 tile.y-=speed
             });
+            this.mapTilesCollider.forEach(tile => {
+                tile.y-=speed
+            });
         }
         else if(direccion == 3){
             this.tiles.forEach(tile => {
                 tile.x+=speed
             });
+            this.mapTilesCollider.forEach(tile => {
+                tile.x+=speed
+            });
         }
         else if(direccion == 4){
             this.tiles.forEach(tile => {
+                tile.y+=speed
+            });
+            this.mapTilesCollider.forEach(tile => {
                 tile.y+=speed
             });
         }
@@ -129,5 +162,12 @@ export class Map {
         this.tiles.forEach(tile => {
             tile.draw(this.ctx);
         });
+        this.mapTilesCollider.forEach(tile => {
+            tile.draw(this.ctx);
+        })
+        
+    }
+    getTileMapBuilding(){
+        return this.tileMapBuilding;
     }
 }
