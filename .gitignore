@@ -1,0 +1,24 @@
+# Dependencias instaladas
+/node_modules
+
+# Archivos de construcción
+/build
+/dist
+
+# Archivos de configuración de ambiente
+.env
+
+# Caché y archivos temporales
+.cache
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de compilación de TypeScript
+*.tsbuildinfo
+
+# Dependencias opcionales como yarn.lock o pnpm-lock.yaml
+yarn.lock
+.pnp
+.pnp.js
