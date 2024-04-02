@@ -7,7 +7,6 @@ const game=new Game(canvas);
 
 function update(){
     game.update();
-    game.draw();
     requestAnimationFrame(update);
 }
 

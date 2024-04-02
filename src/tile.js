@@ -25,8 +25,6 @@ export class Tile {
                 this.height
             );
             if(this.collider==true){
-
-            
             ctx.beginPath();
             ctx.strokeRect(this.x,
                 this.y,
