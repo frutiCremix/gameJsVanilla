@@ -1,6 +1,7 @@
 import { Tile } from "./tile.js";
 import { Player } from "./player.js";
 import { Enemy } from "./enemy.js";
+import { CollisionHandler } from "./collisionHandler.js";
 export class Map {
   player;
   tileW = 16;
@@ -40,6 +41,8 @@ export class Map {
   keysPressed = {};
   speed = 1;
 
+  enemyActive=[];
+  enemyCollider=[];
   constructor(ctx) {
     this.ctx = ctx;
     this.tileSheet = new Image();
@@ -72,7 +75,10 @@ export class Map {
     this.tileSheetBuilding.src = "../public/TilesetBuilding.png";
 
     this.player = new Player(this.ctx);
-    this.enemy = new Enemy(this.ctx);
+  
+    this.crearEnemigos();
+
+    this.collisionHandler= new CollisionHandler(this.player,this.enemyActive,this.mapTilesCollider);
     document.addEventListener("keydown", (e) => this.keyDownHandler(e));
     document.addEventListener("keyup", (e) => this.keyUpHandler(e));
   }
@@ -134,7 +140,33 @@ export class Map {
   //UPDATE
 
   update() {
-    this.move();
+    const collidingEnemy = this.collisionHandler.checkPlayerEnemyCollision();
+    if(!this.collisionHandler.checkPlayerTileMapCollision() && !collidingEnemy){
+      this.move();
+     
+    }else{
+     
+      if (this.keysPressed[37]) {
+        this.moveRigth();
+        this.keysPressed[37]=false;
+      } else if (this.keysPressed[39]) {
+        this.moveLeft();
+        this.keysPressed[39]=false;
+      } else if (this.keysPressed[38]) {
+        this.moveDown();
+        this.keysPressed[38]=false;
+      } else if (this.keysPressed[40]) {
+        this.moveTop();
+        this.keysPressed[40]=false;
+      } 
+      if(collidingEnemy){
+        this.player.setLife(this.player.getLife()-10)
+
+        console.log(this.player.getLife())
+      }
+     
+    }
+    
 
     this.draw();
   }
@@ -151,98 +183,31 @@ export class Map {
       tile.draw(this.ctx);
     });
     this.player.draw();
-    this.enemy.draw();
+
+    for(let enemy of this.enemyActive){
+      enemy.draw();
+    }
+   
+       
+    
+    
   }
   getTileMapBuilding() {
     return this.tileMapBuilding;
   }
   move() {
-    if (this.keysPressed[37] && !this.checkCollisions()) {
+    if (this.keysPressed[37]) {
       this.moveLeft();
-    } else if (this.keysPressed[39] && !this.checkCollisions()) {
+    } else if (this.keysPressed[39]) {
       this.moveRigth();
-    } else if (this.keysPressed[38] && !this.checkCollisions()) {
+    } else if (this.keysPressed[38]) {
       this.moveTop();
-    } else if (this.keysPressed[40] && !this.checkCollisions()) {
+    } else if (this.keysPressed[40]) {
       this.moveDown();
     } 
   }
 
-  checkCollisions() {
-    const playerLeft = this.player.x;
-    const playerRight = this.player.x + this.player.playerWidth;
-    const playerTop = this.player.y;
-    const playerBottom = this.player.y + this.player.playerHeight;
-
-    const enemyLeft = this.enemy.x;
-    const enemyRight = this.enemy.x + this.enemy.enemyWidth;
-    const enemyTop = this.enemy.y;
-    const enemyBottom = this.enemy.y + this.enemy.enemyHeight;
-
-    for (const tile of this.mapTilesCollider) {
-      if (tile.collider === true) {
-        // Calcular las posiciones de los bordes del azulejo
-        const tileLeft = tile.x;
-        const tileRight = tile.x + tile.width;
-        const tileTop = tile.y;
-        const tileBottom = tile.y + tile.height;
-        this.collided = false;
-
-        // Verificar si hay superposición entre el jugador y el azulejo
-        if (
-          playerRight >= tileLeft &&
-          playerLeft <= tileRight &&
-          playerBottom >= tileTop &&
-          playerTop <= tileBottom
-        ) {
-          this.collided = true;
-          // Ajustar la posición del jugador para que esté justo al borde del azulejo
-          if (this.keysPressed[37]) {
-            this.moveRigth();
-            this.keysPressed[37] = false;
-          }
-          if (this.keysPressed[39]) {
-            this.moveLeft();
-            this.keysPressed[39] = false;
-          }
-          if (this.keysPressed[38]) {
-           this.moveDown();
-            this.keysPressed[38] = false;
-          }
-          if (this.keysPressed[40]) {
-            this.moveTop();
-            this.keysPressed[40] = false;
-          }
-          break;//cortamos el bucle cuando encotramos la colision
-        }
-      }
-    } if (
-      playerRight >= enemyLeft &&
-      playerLeft <= enemyRight &&
-      playerBottom >= enemyTop &&
-      playerTop <= enemyBottom
-    ){
-      this.collided=true;
-      if (this.keysPressed[37]) {
-        this.moveRigth();
-        this.keysPressed[37] = false;
-      }
-      if (this.keysPressed[39]) {
-        this.moveLeft();
-        this.keysPressed[39] = false;
-      }
-      if (this.keysPressed[38]) {
-       this.moveDown();
-        this.keysPressed[38] = false;
-      }
-      if (this.keysPressed[40]) {
-        this.moveTop();
-        this.keysPressed[40] = false;
-      }
-    }
-
-    return this.collided;
-  }
+  
   keyDownHandler(e) {
     this.keysPressed[e.keyCode] = true;
   }
@@ -256,7 +221,10 @@ export class Map {
     this.mapTilesCollider.forEach((tile) => {
       tile.x += this.speed;
     });
-    this.enemy.x += this.speed;
+    for(let enemy of this.enemyActive){
+     enemy.x += this.speed;
+    }
+   
   }
   moveRigth() {
     this.tiles.forEach((tile) => {
@@ -265,7 +233,8 @@ export class Map {
     this.mapTilesCollider.forEach((tile) => {
       tile.x -= this.speed;
     });
-    this.enemy.x -= this.speed;
+    for(let enemy of this.enemyActive){
+    enemy.x -= this.speed;}
   }
   moveTop() {
     this.tiles.forEach((tile) => {
@@ -274,7 +243,8 @@ export class Map {
     this.mapTilesCollider.forEach((tile) => {
       tile.y += this.speed;
     });
-    this.enemy.y += this.speed;
+    for(let enemy of this.enemyActive){
+    enemy.y += this.speed;}
     // Flecha arriba
   }
   moveDown() {
@@ -284,6 +254,37 @@ export class Map {
     this.mapTilesCollider.forEach((tile) => {
       tile.y -= this.speed;
     });
-    this.enemy.y -= this.speed;
+    for(let enemy of this.enemyActive){
+    enemy.y -= this.speed;}
   }
+  crearEnemigos() {
+    const numEnemies = 2; // Número de enemigos que deseas crear
+    const minDistance = 50; // Distancia mínima entre los enemigos
+
+    for (let i = 0; i < numEnemies; i++) {
+        let x, y;
+        // Generar posiciones aleatorias hasta que se encuentre una que cumpla con los requisitos
+        do {
+            x = Math.floor(Math.random() * (this.ctx.canvas.width - 50)) + 25; // Posición X aleatoria dentro del canvas
+            y = Math.floor(Math.random() * (this.ctx.canvas.height - 50)) + 25; // Posición Y aleatoria dentro del canvas
+        } while (this.isTooCloseToOtherEnemies(x, y, minDistance));
+
+        let enemy = new Enemy(this.ctx, x, y);
+        this.enemyActive.push(enemy);
+    }
+}
+
+isTooCloseToOtherEnemies(x, y, minDistance) {
+    // Verificar si la nueva posición está demasiado cerca de otros enemigos
+    for (let enemy of this.enemyActive) {
+        const distanceX = Math.abs(x - enemy.x);
+        const distanceY = Math.abs(y - enemy.y);
+        const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+        if (distance < minDistance) {
+            return true;
+        }
+    }
+    return false;
+}
 }

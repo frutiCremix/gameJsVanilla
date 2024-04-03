@@ -8,6 +8,7 @@ export class Player {
     dy = 0;
     x = 0;
     y = 0;
+    life=100;
 
     constructor(ctx) {
         this.ctx = ctx;
@@ -34,6 +35,13 @@ export class Player {
         this.ctx.beginPath()
         this.ctx.rect(this.x,this.y,this.playerWidth,this.playerHeight);
         this.ctx.stroke();
+        this.ctx.beginPath();
+    this.ctx.fillStyle="green"
+    if(this.life<40){
+        this.ctx.fillStyle="red"
+    }
+    this.ctx.fillRect(this.x, this.y+this.playerHeight, this.playerWidth*this.life/100, 5);
+    this.ctx.closePath();
     }
 
    
@@ -55,4 +63,10 @@ export class Player {
             console.log("ataca")
         }
     }
+    getLife(){
+        return this.life;
+      }
+      setLife(life){
+        this.life=life;
+      }
 }
